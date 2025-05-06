@@ -24,4 +24,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
 
-CMD ["python3", "-m", "app"]
+CMD ["python3", "-m", "app", "--host", "0.0.0.0"]
