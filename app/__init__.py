@@ -38,9 +38,11 @@ app = FastAPI(
 async def get_version(app_state: AppStateDependency) -> VersionResponse:
     async with aiohttp.ClientSession() as session:
         async with session.get(
-            urljoin(app_state.config.model_service_url, "/version/app")
+            urljoin(app_state.config.model_service_url, "/version/app"),
+            headers={"Authorization": f"Bearer {app_state.auth_token}"},
         ) as model_service_response, session.get(
-            urljoin(app_state.config.model_service_url, "/version/model")
+            urljoin(app_state.config.model_service_url, "/version/model"),
+            headers={"Authorization": f"Bearer {app_state.auth_token}"},
         ) as model_response:
             model_version: dict[str, Any] = await model_response.json()
             model_service_version: dict[str, Any] = await model_service_response.json()
@@ -59,7 +61,9 @@ async def predict_sentiment(
     async with aiohttp.ClientSession() as session:
         req = ModelServicePredictRequest(review=payload.review)
         async with session.post(
-            urljoin(app_state.config.model_service_url, "/predict"), json=req.model_dump()
+            urljoin(app_state.config.model_service_url, "/predict"),
+            json=req.model_dump(),
+            headers={"Authorization": f"Bearer {app_state.auth_token}"},
         ) as response:
             model_response = ModelServicePredictResponse.model_validate_json(await response.json())
             return SentimentResponse(is_positive=model_response.is_positive)

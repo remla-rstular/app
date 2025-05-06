@@ -12,6 +12,7 @@ from app.models.configuration import AppConfiguration
 class AppState:
     config: AppConfiguration
     db: Engine
+    auth_token: str
 
 
 app_state: AppState | None = None
@@ -28,11 +29,14 @@ async def init_app_state() -> AppState:
 
     config = AppConfiguration()
 
+    with open(config.auth_token_file, "r") as f:
+        auth_token = f.read().strip()
+
     connect_args = {"check_same_thread": False}
     engine = create_engine(f"sqlite:///{config.sqlite_db_path}", connect_args=connect_args)
     SQLModel.metadata.create_all(engine)
 
-    app_state = AppState(config=config, db=engine)
+    app_state = AppState(config=config, db=engine, auth_token=auth_token)
     return app_state
 
 

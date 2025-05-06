@@ -16,6 +16,7 @@ class AppConfiguration(BaseSettings):
 
     model_service_url: str
     sqlite_db_path: str
+    auth_token_file: str
 
     @classmethod
     def settings_customise_sources(
