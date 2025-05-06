@@ -21,6 +21,7 @@ class StatusResponse(BaseModel):
 
 
 class VersionResponse(TypedDict):
-    version: str
+    app_version: str
+    lib_version: str
     model_version: str | None
     model_service_version: str | None

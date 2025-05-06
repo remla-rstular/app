@@ -14,6 +14,11 @@
       .hidden {
         display: none;
       }
+      .version-info {
+        margin-top: 2rem;
+        font-size: 0.8rem;
+        color: #6c757d;
+      }
     </style>
   </head>
   <body class="bg-light">
@@ -52,9 +57,38 @@
           </button>
         </div>
       </div>
+
+      <div id="versionInfo" class="version-info">
+        Loading version information...
+      </div>
     </div>
 
     <script>
+      // Fetch and display version information when page loads
+      document.addEventListener("DOMContentLoaded", async function () {
+        try {
+          const response = await fetch("/api/version");
+          if (response.ok) {
+            const versionData = await response.json();
+            document.getElementById(
+              "versionInfo"
+            ).innerHTML = `Model version: ${
+              versionData.model_version || "N/A"
+            } | 
+               Service version: ${versionData.model_service_version || "N/A"} |
+               App version: ${versionData.app_version || "N/A"} |
+               lib-version: ${versionData.lib_version || "N/A"}`;
+          } else {
+            document.getElementById("versionInfo").textContent =
+              "Version information not available";
+          }
+        } catch (error) {
+          console.error("Error fetching version:", error);
+          document.getElementById("versionInfo").textContent =
+            "Error loading version information";
+        }
+      });
+
       async function analyzeSentiment() {
         const reviewText = document.getElementById("reviewText").value;
 

@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 from typing import Any
 from urllib.parse import urljoin
@@ -21,14 +22,14 @@ from app.state import AppStateDependency, SessionDependency, init_app_state
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    app_state = await init_app_state()
+    await init_app_state()
     yield
 
 
 app = FastAPI(
     title="Restaurant review sentiment analysis",
     description="A simple API to predict the sentiment of restaurant reviews using a pre-trained model.",
-    version=version,
+    version=os.getenv("SERVICE_VERSION", "N/A"),
     lifespan=lifespan,
 )
 
@@ -38,15 +39,16 @@ async def get_version(app_state: AppStateDependency) -> VersionResponse:
     async with aiohttp.ClientSession() as session:
         async with session.get(
             urljoin(app_state.config.model_service_url, "/version/app")
-        ) as app_response, session.get(
+        ) as model_service_response, session.get(
             urljoin(app_state.config.model_service_url, "/version/model")
         ) as model_response:
-            model_service_version: dict[str, Any] = await model_response.json()
-            app_version: dict[str, Any] = await app_response.json()
+            model_version: dict[str, Any] = await model_response.json()
+            model_service_version: dict[str, Any] = await model_service_response.json()
             return VersionResponse(
-                version=f"v{version}",
-                model_version=model_service_version.get("version"),
-                model_service_version=app_version.get("version"),
+                app_version=os.getenv("SERVICE_VERSION", "N/A"),
+                lib_version=f"v{version}",
+                model_version=model_version.get("version"),
+                model_service_version=model_service_version.get("version"),
             )
 
 
