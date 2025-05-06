@@ -1,3 +1,5 @@
+from typing import TypedDict
+
 from pydantic import BaseModel
 
 
@@ -16,3 +18,9 @@ class SentimentCorrectionRequest(BaseModel):
 
 class StatusResponse(BaseModel):
     success: bool
+
+
+class VersionResponse(TypedDict):
+    version: str
+    model_version: str | None
+    model_service_version: str | None

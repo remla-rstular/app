@@ -1,0 +1,66 @@
+name: Docker Image CI
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+    branches:
+      - main
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Get release version the git status
+      id: get_version
+      run: |
+        if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+          VERSION="${GITHUB_REF#refs/tags/}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          echo "tagged=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "Not a tagged release. Extracting prerelease version"
+          VERSION="$(./get_semver.sh)"
+          echo "Version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          echo "tagged=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Checkout LFS objects
+      run: git lfs checkout
+      
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: |
+          ghcr.io/remla-rstular/app
+        tags: |
+          type=semver,pattern={{version}}
+          
+    - name: Build and push
+      uses: docker/build-push-action@v4
+      with:
+          context: .
+          push: true
+          file: ./Dockerfile
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: SERVICE_VERSION=${{ steps.get_version.outputs.version }}
+          cache-from: type=registry,ref=ghcr.io/remla-rstular/app:latest
+          cache-to: type=inline
